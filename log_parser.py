@@ -3,6 +3,7 @@
 import re
 import os
 import json
+import configuration
 
 from collections import Counter
 from utils import get_project_directory, pars_arguments, get_files_list
@@ -19,32 +20,29 @@ class LogParser:
         self.top_server_errors = Counter()
 
     def count_top_ip(self, line):
-        ip = re.search(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", line).group()
+        ip = re.search(configuration.IP_ADDRESS_REGEX, line).group()
         self.ip_counter[ip] += 1
 
     def count_methods_requests(self, line):
-        method = re.search(r'(POST|GET|PUT|DELETE|HEAD)', line)
+        method = re.search(configuration.METHODS_REGEX, line)
         if method:
             methods = method.group()
             self.methods_counter[methods] += 1
 
     def count_duration_requests(self, line):
-        time_request = re.search(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[.{26}\] \"(POST|GET|PUT|DELETE|HEAD)"
-                                 r" \/[\w\d\/\.\-\_\:\;\+\!\?]+ HTTP/1.1\" \d{3} (\d+)", line)
+        time_request = re.search(configuration.DURATION_REQUEST_REGEX, line)
         if time_request:
             time_requests = time_request.groups()
             self.top_duration.append(time_requests)
 
     def count_client_errors(self, line):
-        client_error = re.search(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[.{26}\] \"(POST|GET|PUT|DELETE|HEAD)"
-                                 r" (\/[\w\d\/\.\-\_\:\;\+\!\?]+) HTTP/1.1\" (4\d{2}) ", line)
+        client_error = re.search(configuration.CLIENT_ERROR_REGEX, line)
         if client_error:
             client_errors = client_error.groups()
             self.top_client_errors[" ".join(client_errors)] += 1
 
     def count_server_errors(self, line):
-        server_error = re.search(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - - \[.{26}\] \"(POST|GET|PUT|DELETE|HEAD)"
-                                 r" (\/[\w\d\/\.\-\_\:\;\+\!\?]+) HTTP/1.1\" (5\d{2}) ", line)
+        server_error = re.search(configuration.SERVER_ERROR_REGEX, line)
         if server_error:
             server_errors = server_error.groups()
             self.top_server_errors[" ".join(server_errors)] += 1
